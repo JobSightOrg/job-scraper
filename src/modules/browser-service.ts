@@ -44,10 +44,6 @@ export class BrowserService implements BrowserServiceProps {
     this.checkBrowser();
 
     await page.close();
-
-    // if (this.numberPages === 0) {
-    //   await this.browser!.close();
-    // }
   }
 
   /**
@@ -64,9 +60,14 @@ export class BrowserService implements BrowserServiceProps {
    * Initialize the instance.
    */
   public async initialize(): Promise<void> {
-    this.browser = await puppeteer.launch({
-      headless: false,
-    });
+    try {
+      this.browser = await puppeteer.launch({
+        headless: false,
+      });
+    } catch (error) {
+      console.error("Error initializing browser:", error);
+      throw error;
+    }
   }
 
   /**

@@ -1,9 +1,10 @@
+import { Page } from "puppeteer";
 import { BrowserService } from "../browser-service";
 import DefaultBrowser from "../default-browser";
 
 interface MicrosoftBrowserProps {
-  restartBrowserInstance: () => Promise<void>;
-  execTask: (url: string) => Promise<boolean>;
+  // restartBrowserInstance: () => Promise<void>;
+  execTask: (url: string, counter: number) => Promise<boolean>;
 }
 
 export default class MicrosoftBrowser
@@ -11,30 +12,50 @@ export default class MicrosoftBrowser
   implements MicrosoftBrowserProps
 {
   private static instance: MicrosoftBrowser | null = null;
+  private static initializationPromise: Promise<void> | null = null;
+  private static isInitializingBrowser: boolean = false;
 
   private constructor(private browserService: BrowserService) {
     super();
   }
 
-  public static async getInstance(): Promise<MicrosoftBrowser> {
+  private static async initializeBrowser(
+    browserServiceInstance: BrowserService
+  ): Promise<void> {
+    await browserServiceInstance.initialize();
+  }
+
+  private async restartBrowserInstance(): Promise<void> {
+    await this.browserService.restartBrowser();
+  }
+
+  public static async getInstance(counter?: number): Promise<MicrosoftBrowser> {
     if (!MicrosoftBrowser.instance) {
       const browserServiceInstance = new BrowserService();
-      console.log("here");
+      console.log("instance", counter);
+
       MicrosoftBrowser.instance = new MicrosoftBrowser(browserServiceInstance);
-      await browserServiceInstance.initialize();
+      MicrosoftBrowser.initializationPromise =
+        MicrosoftBrowser.initializeBrowser(browserServiceInstance);
+      MicrosoftBrowser.isInitializingBrowser = true;
+    } else if (MicrosoftBrowser.isInitializingBrowser) {
+      console.log("initializationPromise", counter);
+      await MicrosoftBrowser.initializationPromise;
+      MicrosoftBrowser.isInitializingBrowser = false;
     }
 
     return MicrosoftBrowser.instance;
   }
 
-  public async restartBrowserInstance(): Promise<void> {
-    await this.browserService.restartBrowser();
-  }
-
-  public async execTask(url: string): Promise<boolean> {
-    const page = await this.browserService.openPage();
+  public async execTask(url: string, counter: number): Promise<boolean> {
+    let page: Page | null = null;
 
     try {
+      await MicrosoftBrowser.getInstance(counter);
+      // if (!this.browserService.browser) await this.browserService.initialize();
+
+      page = await this.browserService.openPage();
+
       await page.goto(url, { timeout: 5000, waitUntil: "load" });
 
       // Fully render HTML page on first page load for browser caching.
@@ -51,7 +72,7 @@ export default class MicrosoftBrowser
       console.error(err);
       return false;
     } finally {
-      await page.close();
+      if (page) await page.close();
     }
   }
 }
