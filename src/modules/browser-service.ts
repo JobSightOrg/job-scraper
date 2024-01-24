@@ -9,11 +9,14 @@ interface BrowserServiceProps {
 
 export class BrowserService implements BrowserServiceProps {
   private browser: Browser | null = null;
+  private browserInitialization: Promise<Browser> | null = null;
+  private isInitializingBrowser: boolean = false;
   private headers: {
     "accept-encoding": string;
     "accept-language": string;
     "user-agent": string;
   };
+  public firstRender: boolean = false;
   public numberPages: number = 0;
 
   public constructor() {
@@ -25,7 +28,14 @@ export class BrowserService implements BrowserServiceProps {
   }
 
   /**
-   * Get a browser page.
+   * Return browser variable.
+   */
+  public getBrowser(): Browser | null {
+    return this.browser;
+  }
+
+  /**
+   * Open a page.
    */
   public async openPage(): Promise<Page> {
     this.checkBrowser();
@@ -61,9 +71,18 @@ export class BrowserService implements BrowserServiceProps {
    */
   public async initialize(): Promise<void> {
     try {
-      this.browser = await puppeteer.launch({
-        headless: false,
-      });
+      if (!this.browserInitialization) {
+        this.browserInitialization = puppeteer.launch({
+          headless: false,
+        });
+        this.isInitializingBrowser = true;
+      }
+
+      if (this.isInitializingBrowser) {
+        console.log("other init");
+        this.browser = await this.browserInitialization;
+        this.isInitializingBrowser = false;
+      }
     } catch (error) {
       console.error("Error initializing browser:", error);
       throw error;

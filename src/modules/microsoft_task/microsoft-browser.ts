@@ -12,47 +12,46 @@ export default class MicrosoftBrowser
   implements MicrosoftBrowserProps
 {
   private static instance: MicrosoftBrowser | null = null;
-  private static initializationPromise: Promise<void> | null = null;
-  private static isInitializingBrowser: boolean = false;
+  // private static initializationPromise: Promise<void> | null = null;
+  // private static isInitializingBrowser: boolean = false;
 
   private constructor(private browserService: BrowserService) {
     super();
   }
 
-  private static async initializeBrowser(
-    browserServiceInstance: BrowserService
-  ): Promise<void> {
-    await browserServiceInstance.initialize();
-  }
+  // private static async initializeBrowser(
+  //   browserServiceInstance: BrowserService
+  // ): Promise<void> {
+  //   await browserServiceInstance.initialize();
+  // }
 
   private async restartBrowserInstance(): Promise<void> {
     await this.browserService.restartBrowser();
   }
 
-  public static async getInstance(counter?: number): Promise<MicrosoftBrowser> {
+  public static getInstance(): MicrosoftBrowser {
     if (!MicrosoftBrowser.instance) {
       const browserServiceInstance = new BrowserService();
-      console.log("instance", counter);
 
       MicrosoftBrowser.instance = new MicrosoftBrowser(browserServiceInstance);
-      MicrosoftBrowser.initializationPromise =
-        MicrosoftBrowser.initializeBrowser(browserServiceInstance);
-      MicrosoftBrowser.isInitializingBrowser = true;
-    } else if (MicrosoftBrowser.isInitializingBrowser) {
-      console.log("initializationPromise", counter);
-      await MicrosoftBrowser.initializationPromise;
-      MicrosoftBrowser.isInitializingBrowser = false;
+      //   MicrosoftBrowser.initializationPromise =
+      //     MicrosoftBrowser.initializeBrowser(browserServiceInstance);
+      //   MicrosoftBrowser.isInitializingBrowser = true;
+      // } else if (MicrosoftBrowser.isInitializingBrowser) {
+      //   console.log("initializationPromise", counter);
+      //   await MicrosoftBrowser.initializationPromise;
+      //   MicrosoftBrowser.isInitializingBrowser = false;
     }
 
     return MicrosoftBrowser.instance;
   }
 
-  public async execTask(url: string, counter: number): Promise<boolean> {
+  public async execTask(url: string): Promise<boolean> {
     let page: Page | null = null;
 
     try {
-      await MicrosoftBrowser.getInstance(counter);
-      // if (!this.browserService.browser) await this.browserService.initialize();
+      if (!this.browserService.getBrowser())
+        await this.browserService.initialize();
 
       page = await this.browserService.openPage();
 

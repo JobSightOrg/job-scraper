@@ -27,7 +27,6 @@ export async function defaultRoutes(server: FastifyInstance) {
 }
 
 export async function apiRoutes(server: FastifyInstance) {
-  let counter = 0;
   server.post(
     "/webtask/:website",
     { schema: responseSchema },
@@ -38,10 +37,9 @@ export async function apiRoutes(server: FastifyInstance) {
 
       switch (website) {
         case "microsoft":
-          const microsoftBrowserInstance = await MicrosoftBrowser.getInstance();
+          const microsoftBrowserInstance = MicrosoftBrowser.getInstance();
 
-          counter++;
-          result = await microsoftBrowserInstance.execTask(url, counter);
+          result = await microsoftBrowserInstance.execTask(url);
           break;
         case "google":
           break;
