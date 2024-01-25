@@ -79,7 +79,6 @@ export class BrowserService implements BrowserServiceProps {
       }
 
       if (this.isInitializingBrowser) {
-        console.log("other init");
         this.browser = await this.browserInitialization;
         this.isInitializingBrowser = false;
       }
