@@ -1,6 +1,8 @@
 import puppeteer, { Browser, Page } from "puppeteer";
 
 interface BrowserServiceProps {
+  getBrowser: () => Browser | null;
+  // getOpenPagesNumber: () => number;
   initialize: () => Promise<void>;
   openPage: () => Promise<Page>;
   closePage: (page: Page) => Promise<void>;
@@ -11,13 +13,13 @@ export class BrowserService implements BrowserServiceProps {
   private browser: Browser | null = null;
   private browserInitialization: Promise<Browser> | null = null;
   private isInitializingBrowser: boolean = false;
+  // private numberPages: number = 0;
   private headers: {
     "accept-encoding": string;
     "accept-language": string;
     "user-agent": string;
   };
-  public firstRender: boolean = false;
-  public numberPages: number = 0;
+  // private firstRender: boolean = true;
 
   public constructor() {
     this.headers = {
@@ -34,6 +36,13 @@ export class BrowserService implements BrowserServiceProps {
     return this.browser;
   }
 
+  // /**
+  //  * Return number of open pages.
+  //  */
+  // public getOpenPagesNumber(): number {
+  //   return this.numberPages;
+  // }
+
   /**
    * Open a page.
    */
@@ -43,7 +52,6 @@ export class BrowserService implements BrowserServiceProps {
     const page = await this.browser!.newPage();
     await page.setExtraHTTPHeaders(this.headers);
 
-    this.numberPages++;
     return page;
   }
 
@@ -63,6 +71,8 @@ export class BrowserService implements BrowserServiceProps {
     this.checkBrowser();
 
     await this.browser!.close();
+    this.browser = null;
+    this.browserInitialization = null;
     await this.initialize();
   }
 
@@ -83,8 +93,8 @@ export class BrowserService implements BrowserServiceProps {
         this.isInitializingBrowser = false;
       }
     } catch (error) {
-      console.error("Error initializing browser:", error);
-      throw error;
+      console.error("Error initializing browser");
+      // throw error;
     }
   }
 

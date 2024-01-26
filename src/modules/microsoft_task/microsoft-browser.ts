@@ -1,6 +1,10 @@
-import { Page } from "puppeteer";
+import { Page, TimeoutError } from "puppeteer";
 import { BrowserService } from "../browser-service";
 import DefaultBrowser from "../default-browser";
+import {
+  exCatch,
+  handlePuppeteerError,
+} from "../../lib/handle-puppeteer-error";
 
 interface MicrosoftBrowserProps {
   // restartBrowserInstance: () => Promise<void>;
@@ -42,9 +46,9 @@ export default class MicrosoftBrowser
 
       await page.goto(url, { timeout: 5000, waitUntil: "load" });
 
-      // Fully render HTML page on first page load for browser caching.
-      if (this.browserService.numberPages === 1)
-        await this.waitTillHTMLRendered(page);
+      // // Fully render HTML page on first page load for browser caching.
+      // if (this.browserService.numberPages === 1)
+      //   await this.waitTillHTMLRendered(page);
 
       await page.waitForXPath(
         "//span[contains(@class, 'ms-Button-label') and contains(@class, 'label-76') and text()='Apply']",
@@ -52,11 +56,13 @@ export default class MicrosoftBrowser
       );
 
       return true;
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
+
+      // await handlePuppeteerError(err, exCatch);
       return false;
     } finally {
-      if (page) await page.close();
+      if (page) await this.browserService.closePage(page);
     }
   }
 }
