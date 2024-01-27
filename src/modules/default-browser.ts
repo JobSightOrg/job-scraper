@@ -48,4 +48,6 @@ export default abstract class DefaultBrowser {
       await setTimeout(checkDurationMsecs);
     }
   }
+
+  abstract execTask(url: string): Promise<boolean>;
 }

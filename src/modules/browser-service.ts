@@ -83,7 +83,7 @@ export class BrowserService implements BrowserServiceProps {
     try {
       if (!this.browserInitialization) {
         this.browserInitialization = puppeteer.launch({
-          headless: false,
+          headless: "new",
         });
         this.isInitializingBrowser = true;
       }
@@ -94,7 +94,6 @@ export class BrowserService implements BrowserServiceProps {
       }
     } catch (error) {
       console.error("Error initializing browser");
-      // throw error;
     }
   }
 

@@ -1,19 +1,16 @@
 import { Page, TimeoutError } from "puppeteer";
 import { BrowserService } from "../browser-service";
 import DefaultBrowser from "../default-browser";
-import {
-  exCatch,
-  handlePuppeteerError,
-} from "../../lib/handle-puppeteer-error";
+import { handlePuppeteerError } from "../../lib/handle-puppeteer-error";
 
-interface MicrosoftBrowserProps {
+interface IMicrosoftBrowser {
   // restartBrowserInstance: () => Promise<void>;
   execTask: (url: string, counter: number) => Promise<boolean>;
 }
 
 export default class MicrosoftBrowser
   extends DefaultBrowser
-  implements MicrosoftBrowserProps
+  implements IMicrosoftBrowser
 {
   private static instance: MicrosoftBrowser | null = null;
 
@@ -21,9 +18,9 @@ export default class MicrosoftBrowser
     super();
   }
 
-  private async restartBrowserInstance(): Promise<void> {
-    await this.browserService.restartBrowser();
-  }
+  // private async restartBrowserInstance(): Promise<void> {
+  //   await this.browserService.restartBrowser();
+  // }
 
   public static getInstance(): MicrosoftBrowser {
     if (!MicrosoftBrowser.instance) {
@@ -44,22 +41,18 @@ export default class MicrosoftBrowser
 
       page = await this.browserService.openPage();
 
-      await page.goto(url, { timeout: 5000, waitUntil: "load" });
-
-      // // Fully render HTML page on first page load for browser caching.
-      // if (this.browserService.numberPages === 1)
-      //   await this.waitTillHTMLRendered(page);
-
-      await page.waitForXPath(
-        "//span[contains(@class, 'ms-Button-label') and contains(@class, 'label-76') and text()='Apply']",
-        { timeout: 5000 }
-      );
+      await Promise.all([
+        page.goto(url, { waitUntil: "load" }),
+        page.waitForXPath(
+          "//span[contains(@class, 'ms-Button-label') and contains(@class, 'label-76') and text()='Apply']"
+        ),
+      ]);
 
       return true;
     } catch (err: any) {
       console.error(err);
 
-      // await handlePuppeteerError(err, exCatch);
+      await handlePuppeteerError(err, this.browserService, page);
       return false;
     } finally {
       if (page) await this.browserService.closePage(page);
