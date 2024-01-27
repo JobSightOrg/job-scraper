@@ -33,22 +33,22 @@ const exCatch: ExCatch = {
 // Add the parameter types and the return type to the function declaration
 export async function handlePuppeteerError(
   e: Error,
-  browserService: BrowserService,
-  page: Page | null
+  page: Page | null,
+  browserService: BrowserService
 ): Promise<void> {
   // exCatch is an object that maps error types to catch functions
-  const catchFunc = exCatch[e.name];
-  const argumentParam = catchFunc.arguments[0];
+  const catchFunc: Function | undefined = exCatch[e.name];
 
-  console.log(argumentParam);
+  console.log(catchFunc.arguments);
   // execute the catch function for the matching error type
   if (catchFunc) {
-    if (argumentParam === BrowserService) {
-      await catchFunc(browserService);
-    } else if (argumentParam === Page) {
-      await catchFunc(page);
-    } else {
-      await catchFunc();
+    switch (e.name) {
+      case "TimeoutError":
+        catchFunc(browserService);
+        break;
+      case "NavigationError":
+        catchFunc(page);
+        break;
     }
   }
 }

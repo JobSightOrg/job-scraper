@@ -3,28 +3,28 @@ import { BrowserService } from "../browser-service";
 import DefaultBrowser from "../default-browser";
 import { handlePuppeteerError } from "../../lib/handle-puppeteer-error";
 
-interface IMicrosoftBrowser {
+interface IGoogleBrowser {
   execTask: (url: string, counter: number) => Promise<boolean>;
 }
 
-export default class MicrosoftBrowser
+export default class GoogleBrowser
   extends DefaultBrowser
-  implements IMicrosoftBrowser
+  implements IGoogleBrowser
 {
-  private static instance: MicrosoftBrowser | null = null;
+  private static instance: GoogleBrowser | null = null;
 
   private constructor(private browserService: BrowserService) {
     super();
   }
 
-  public static getInstance(): MicrosoftBrowser {
-    if (!MicrosoftBrowser.instance) {
+  public static getInstance(): GoogleBrowser {
+    if (!GoogleBrowser.instance) {
       const browserServiceInstance = new BrowserService();
 
-      MicrosoftBrowser.instance = new MicrosoftBrowser(browserServiceInstance);
+      GoogleBrowser.instance = new GoogleBrowser(browserServiceInstance);
     }
 
-    return MicrosoftBrowser.instance;
+    return GoogleBrowser.instance;
   }
 
   public async execTask(url: string): Promise<boolean> {
@@ -37,11 +37,10 @@ export default class MicrosoftBrowser
       page = await this.browserService.openPage();
 
       await Promise.all([
-        page.goto(url, { waitUntil: "load", timeout: 5000 }),
+        page.goto(url, { waitUntil: "load", timeout: 10000 }),
         page.waitForXPath(
-          // "//span[contains(@class, 'ms-Button-label') and contains(@class, 'label-76') and text()='Apply']",
-          "//span[contains(@class, 'test') and contains(@class, 'test2') and text()='Apply']",
-          { timeout: 5000 }
+          "//a[contains(@class, 'VfPpkd-mRLv6') and contains(@id, 'apply-action-button') and text()='Apply']",
+          { timeout: 10000 }
         ),
       ]);
 
