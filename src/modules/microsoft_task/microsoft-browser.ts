@@ -1,7 +1,8 @@
-import { Page } from "puppeteer";
+import { HTTPResponse, Page } from "puppeteer";
 import { BrowserService } from "../browser-service";
 import DefaultBrowser from "../default-browser";
 import { handlePuppeteerError } from "../../lib/handle-puppeteer-error";
+import { ResponseError } from "../../lib/custom-error";
 
 interface IMicrosoftBrowser {
   execTask: (url: string, counter: number) => Promise<boolean>;
@@ -29,15 +30,22 @@ export default class MicrosoftBrowser
 
   public async execTask(url: string): Promise<boolean> {
     let page: Page | null = null;
+    let response: HTTPResponse | null = null;
 
     try {
       if (!this.browserService.getBrowser())
         await this.browserService.initialize();
 
       page = await this.browserService.openPage();
+      response = await page.goto(url, { waitUntil: "load", timeout: 5000 });
+
+      if (response && response.status() >= 400)
+        throw new ResponseError(
+          `Bad response. Status: ${response.status()}`,
+          response.status()
+        );
 
       await Promise.all([
-        page.goto(url, { waitUntil: "load", timeout: 5000 }),
         page.waitForXPath(
           // "//span[contains(@class, 'ms-Button-label') and contains(@class, 'label-76') and text()='Apply']",
           "//span[contains(@class, 'test') and contains(@class, 'test2') and text()='Apply']",
@@ -49,8 +57,7 @@ export default class MicrosoftBrowser
     } catch (err: any) {
       console.error(err);
 
-      await handlePuppeteerError(err, page, this.browserService);
-      return false;
+      return await handlePuppeteerError(err, page, this.browserService);
     } finally {
       if (page) await this.browserService.closePage(page);
     }

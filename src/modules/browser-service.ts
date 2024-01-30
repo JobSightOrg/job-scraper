@@ -70,6 +70,14 @@ export class BrowserService implements BrowserServiceProps {
   public async restartBrowser(): Promise<void> {
     this.checkBrowser();
 
+    let openPages = await this.browser!.pages();
+
+    while (openPages.length > 0) {
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      openPages = await this.browser!.pages();
+    }
+
     await this.browser!.close();
     this.browser = null;
     this.browserInitialization = null;
@@ -84,6 +92,11 @@ export class BrowserService implements BrowserServiceProps {
       if (!this.browserInitialization) {
         this.browserInitialization = puppeteer.launch({
           headless: "new",
+          args: [
+            "--no-sandbox", // Disable sandboxing for faster launch (use with caution)
+            "--disable-dev-shm-usage", // Disable /dev/shm usage
+            "--disable-setuid-sandbox", // Disable setuid sandbox (use with caution)
+          ],
         });
         this.isInitializingBrowser = true;
       }
@@ -92,8 +105,9 @@ export class BrowserService implements BrowserServiceProps {
         this.browser = await this.browserInitialization;
         this.isInitializingBrowser = false;
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error initializing browser");
+      throw error;
     }
   }
 

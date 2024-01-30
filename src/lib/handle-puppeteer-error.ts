@@ -3,30 +3,26 @@ import { BrowserService } from "../modules/browser-service";
 
 // Define the type of the exCatch parameter as an object that maps error types to catch functions
 type ExCatch = {
-  [errorType: string]: (...args: any) => Promise<void>;
+  [errorType: string]: (...args: any) => Promise<boolean>;
 };
 
 const exCatch: ExCatch = {
   // Handle timeout error
-  TimeoutError: async (browserService: BrowserService) => {
+  TimeoutError: async (browserService: BrowserService): Promise<boolean> => {
     const browser: Browser | null = browserService.getBrowser();
 
     if (browser) {
-      let openPages = await browser.pages();
-
-      while (openPages.length > 0) {
-        // Wait for a short duration before checking again
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-
-        // Get the current list of open pages
-        openPages = await browser.pages();
-      }
+      await browserService.initialize();
+      return true;
     }
-    // await browserService.initialize();
+
+    return false;
   },
   // Handle navigation error
-  NavigationError: async (page: Page) => {
+  NavigationError: async (page: Page): Promise<boolean> => {
     await page.close();
+
+    return false;
   },
 };
 
@@ -35,20 +31,19 @@ export async function handlePuppeteerError(
   e: Error,
   page: Page | null,
   browserService: BrowserService
-): Promise<void> {
+): Promise<boolean> {
   // exCatch is an object that maps error types to catch functions
   const catchFunc: Function | undefined = exCatch[e.name];
 
-  console.log(catchFunc.arguments);
   // execute the catch function for the matching error type
   if (catchFunc) {
     switch (e.name) {
-      case "TimeoutError":
-        catchFunc(browserService);
-        break;
+      case "TimeoutError" || "ResponseError":
+        return catchFunc(browserService);
       case "NavigationError":
-        catchFunc(page);
-        break;
+        return catchFunc(page);
     }
   }
+
+  return false;
 }
