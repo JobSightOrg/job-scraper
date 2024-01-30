@@ -9,17 +9,17 @@ export default abstract class DefaultBrowser {
     this.proxies = [];
   }
 
-  protected async load_proxies() {
-    try {
-      // Read the contents of the file asynchronously
-      const data = await fsPromises.readFile("proxies.txt", "utf8");
+  // protected async loadProxies() {
+  //   try {
+  //     // Read the contents of the file asynchronously
+  //     const data = await fsPromises.readFile("proxies.txt", "utf8");
 
-      // Split the file contents into an array of lines
-      this.proxies = data.split("\n");
-    } catch (error) {
-      console.error("Error reading the file:", error);
-    }
-  }
+  //     // Split the file contents into an array of lines
+  //     this.proxies = data.split("\n");
+  //   } catch (error) {
+  //     console.error("Error reading the file:", error);
+  //   }
+  // }
 
   protected async waitTillHTMLRendered(page: Page, timeout = 10000) {
     const checkDurationMsecs = 1000;

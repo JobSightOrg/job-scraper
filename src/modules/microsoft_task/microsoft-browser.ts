@@ -2,7 +2,8 @@ import { HTTPResponse, Page } from "puppeteer";
 import { BrowserService } from "../browser-service";
 import DefaultBrowser from "../default-browser";
 import { handlePuppeteerError } from "../../lib/handle-puppeteer-error";
-import { ResponseError } from "../../lib/custom-error";
+import { ResponseError } from "../../lib/custom-errors";
+import useProxy from "puppeteer-page-proxy";
 
 interface IMicrosoftBrowser {
   execTask: (url: string, counter: number) => Promise<boolean>;
@@ -45,13 +46,11 @@ export default class MicrosoftBrowser
           response.status()
         );
 
-      await Promise.all([
-        page.waitForXPath(
-          // "//span[contains(@class, 'ms-Button-label') and contains(@class, 'label-76') and text()='Apply']",
-          "//span[contains(@class, 'test') and contains(@class, 'test2') and text()='Apply']",
-          { timeout: 5000 }
-        ),
-      ]);
+      await page.waitForXPath(
+        // "//span[contains(@class, 'ms-Button-label') and contains(@class, 'label-76') and text()='Apply']",
+        "//span[contains(@class, 'test') and contains(@class, 'test2') and text()='Apply']",
+        { timeout: 5000 }
+      );
 
       return true;
     } catch (err: any) {

@@ -1,8 +1,13 @@
+import { promises as fsPromises } from "fs";
 import puppeteer, { Browser, Page } from "puppeteer";
+import useProxy from "puppeteer-page-proxy";
+
+interface ProxyData {
+  proxies: string[];
+}
 
 interface BrowserServiceProps {
   getBrowser: () => Browser | null;
-  // getOpenPagesNumber: () => number;
   initialize: () => Promise<void>;
   openPage: () => Promise<Page>;
   closePage: (page: Page) => Promise<void>;
@@ -13,13 +18,11 @@ export class BrowserService implements BrowserServiceProps {
   private browser: Browser | null = null;
   private browserInitialization: Promise<Browser> | null = null;
   private isInitializingBrowser: boolean = false;
-  // private numberPages: number = 0;
   private headers: {
     "accept-encoding": string;
     "accept-language": string;
     "user-agent": string;
   };
-  // private firstRender: boolean = true;
 
   public constructor() {
     this.headers = {
@@ -29,19 +32,26 @@ export class BrowserService implements BrowserServiceProps {
     };
   }
 
+  private async loadProxy(): Promise<string> {
+    try {
+      // Read the contents of the file asynchronously
+      const data = await fsPromises.readFile("proxies.json", "utf8");
+      const parsedData: ProxyData = JSON.parse(data);
+
+      return parsedData.proxies[0];
+    } catch (error) {
+      console.error("Error reading the file:", error);
+    }
+
+    return "";
+  }
+
   /**
    * Return browser variable.
    */
   public getBrowser(): Browser | null {
     return this.browser;
   }
-
-  // /**
-  //  * Return number of open pages.
-  //  */
-  // public getOpenPagesNumber(): number {
-  //   return this.numberPages;
-  // }
 
   /**
    * Open a page.
@@ -50,6 +60,8 @@ export class BrowserService implements BrowserServiceProps {
     this.checkBrowser();
 
     const page = await this.browser!.newPage();
+
+    await useProxy(page, this.loadProxy());
     await page.setExtraHTTPHeaders(this.headers);
 
     return page;
