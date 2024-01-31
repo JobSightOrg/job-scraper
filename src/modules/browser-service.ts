@@ -1,6 +1,7 @@
 import { promises as fsPromises } from "fs";
-import puppeteer, { Browser, Page } from "puppeteer";
+import puppeteer, { Browser, HTTPResponse, Page } from "puppeteer";
 import useProxy from "puppeteer-page-proxy";
+import { ResponseError } from "../lib/custom-errors";
 
 interface ProxyData {
   proxies: string[];
@@ -32,20 +33,6 @@ export class BrowserService implements BrowserServiceProps {
     };
   }
 
-  private async loadProxy(): Promise<string> {
-    try {
-      // Read the contents of the file asynchronously
-      const data = await fsPromises.readFile("proxies.json", "utf8");
-      const parsedData: ProxyData = JSON.parse(data);
-
-      return parsedData.proxies[0];
-    } catch (error) {
-      console.error("Error reading the file:", error);
-    }
-
-    return "";
-  }
-
   /**
    * Return browser variable.
    */
@@ -61,7 +48,7 @@ export class BrowserService implements BrowserServiceProps {
 
     const page = await this.browser!.newPage();
 
-    await useProxy(page, this.loadProxy());
+    // await useProxy(page, this.loadProxy());
     await page.setExtraHTTPHeaders(this.headers);
 
     return page;
@@ -103,7 +90,7 @@ export class BrowserService implements BrowserServiceProps {
     try {
       if (!this.browserInitialization) {
         this.browserInitialization = puppeteer.launch({
-          headless: "new",
+          headless: false,
           args: [
             "--no-sandbox", // Disable sandboxing for faster launch (use with caution)
             "--disable-dev-shm-usage", // Disable /dev/shm usage
@@ -121,6 +108,50 @@ export class BrowserService implements BrowserServiceProps {
       console.error("Error initializing browser");
       throw error;
     }
+  }
+
+  public async execTask(url: string): Promise<void> {
+    let page: Page | null = null;
+    let response: HTTPResponse | null = null;
+
+    try {
+      if (!this.getBrowser()) await this.initialize();
+      console.log(this.getBrowser());
+
+      page = await this.openPage();
+      response = await page.goto(url, { waitUntil: "load", timeout: 5000 });
+
+      if (response && response.status() >= 400)
+        throw new ResponseError(
+          `Bad response. Status: ${response.status()}`,
+          response.status()
+        );
+
+      await page.waitForXPath(
+        // "//span[contains(@class, 'ms-Button-label') and contains(@class, 'label-76') and text()='Apply']",
+        "//span[contains(@class, 'test') and contains(@class, 'test2') and text()='Apply']",
+        { timeout: 5000 }
+      );
+    } catch (err: any) {
+      console.error(err);
+      // return await handlePuppeteerError(err, page, this.browserService);
+    } finally {
+      if (page) await this.closePage(page);
+    }
+  }
+
+  private async loadProxy(): Promise<string> {
+    try {
+      // Read the contents of the file asynchronously
+      const data = await fsPromises.readFile("proxies.json", "utf8");
+      const parsedData: ProxyData = JSON.parse(data);
+
+      return parsedData.proxies[0];
+    } catch (error) {
+      console.error("Error reading the file:", error);
+    }
+
+    return "";
   }
 
   /**

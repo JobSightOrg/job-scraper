@@ -3,7 +3,6 @@ import { BrowserService } from "../browser-service";
 import DefaultBrowser from "../default-browser";
 import { handlePuppeteerError } from "../../lib/handle-puppeteer-error";
 import { ResponseError } from "../../lib/custom-errors";
-import useProxy from "puppeteer-page-proxy";
 
 interface IMicrosoftBrowser {
   execTask: (url: string, counter: number) => Promise<boolean>;
@@ -16,7 +15,7 @@ export default class MicrosoftBrowser
   private static instance: MicrosoftBrowser | null = null;
 
   private constructor(private browserService: BrowserService) {
-    super();
+    super(browserService);
   }
 
   public static getInstance(): MicrosoftBrowser {
@@ -30,35 +29,36 @@ export default class MicrosoftBrowser
   }
 
   public async execTask(url: string): Promise<boolean> {
-    let page: Page | null = null;
-    let response: HTTPResponse | null = null;
+    await this.browserService.execTask(url);
+    return true;
+    //   let page: Page | null = null;
+    //   let response: HTTPResponse | null = null;
 
-    try {
-      if (!this.browserService.getBrowser())
-        await this.browserService.initialize();
+    //   try {
+    //     if (!this.browserService.getBrowser())
+    //       await this.browserService.initialize();
 
-      page = await this.browserService.openPage();
-      response = await page.goto(url, { waitUntil: "load", timeout: 5000 });
+    //     page = await this.browserService.openPage();
+    //     response = await page.goto(url, { waitUntil: "load", timeout: 5000 });
 
-      if (response && response.status() >= 400)
-        throw new ResponseError(
-          `Bad response. Status: ${response.status()}`,
-          response.status()
-        );
+    //     if (response && response.status() >= 400)
+    //       throw new ResponseError(
+    //         `Bad response. Status: ${response.status()}`,
+    //         response.status()
+    //       );
 
-      await page.waitForXPath(
-        // "//span[contains(@class, 'ms-Button-label') and contains(@class, 'label-76') and text()='Apply']",
-        "//span[contains(@class, 'test') and contains(@class, 'test2') and text()='Apply']",
-        { timeout: 5000 }
-      );
+    //     await page.waitForXPath(
+    //       // "//span[contains(@class, 'ms-Button-label') and contains(@class, 'label-76') and text()='Apply']",
+    //       "//span[contains(@class, 'test') and contains(@class, 'test2') and text()='Apply']",
+    //       { timeout: 5000 }
+    //     );
 
-      return true;
-    } catch (err: any) {
-      console.error(err);
-
-      return await handlePuppeteerError(err, page, this.browserService);
-    } finally {
-      if (page) await this.browserService.closePage(page);
-    }
+    //     return true;
+    //   } catch (err: any) {
+    //     console.error(err);
+    //     return await handlePuppeteerError(err, page, this.browserService);
+    //   } finally {
+    //     if (page) await this.browserService.closePage(page);
+    //   }
   }
 }

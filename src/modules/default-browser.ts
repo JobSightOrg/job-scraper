@@ -1,11 +1,12 @@
 import { promises as fsPromises } from "fs";
 import { Page } from "puppeteer";
 import { setTimeout } from "node:timers/promises";
+import { BrowserService } from "./browser-service";
 
 export default abstract class DefaultBrowser {
   protected proxies: string[];
 
-  protected constructor() {
+  protected constructor(browserService: BrowserService) {
     this.proxies = [];
   }
 
