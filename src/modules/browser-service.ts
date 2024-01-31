@@ -110,35 +110,35 @@ export class BrowserService implements BrowserServiceProps {
     }
   }
 
-  public async execTask(url: string): Promise<void> {
-    let page: Page | null = null;
-    let response: HTTPResponse | null = null;
+  // public async execTask(url: string): Promise<void> {
+  //   let page: Page | null = null;
+  //   let response: HTTPResponse | null = null;
 
-    try {
-      if (!this.getBrowser()) await this.initialize();
-      console.log(this.getBrowser());
+  //   try {
+  //     if (!this.getBrowser()) await this.initialize();
+  //     console.log(this.getBrowser());
 
-      page = await this.openPage();
-      response = await page.goto(url, { waitUntil: "load", timeout: 5000 });
+  //     page = await this.openPage();
+  //     response = await page.goto(url, { waitUntil: "load", timeout: 5000 });
 
-      if (response && response.status() >= 400)
-        throw new ResponseError(
-          `Bad response. Status: ${response.status()}`,
-          response.status()
-        );
+  //     if (response && response.status() >= 400)
+  //       throw new ResponseError(
+  //         `Bad response. Status: ${response.status()}`,
+  //         response.status()
+  //       );
 
-      await page.waitForXPath(
-        // "//span[contains(@class, 'ms-Button-label') and contains(@class, 'label-76') and text()='Apply']",
-        "//span[contains(@class, 'test') and contains(@class, 'test2') and text()='Apply']",
-        { timeout: 5000 }
-      );
-    } catch (err: any) {
-      console.error(err);
-      // return await handlePuppeteerError(err, page, this.browserService);
-    } finally {
-      if (page) await this.closePage(page);
-    }
-  }
+  //     await page.waitForXPath(
+  //       "//span[contains(@class, 'ms-Button-label') and contains(@class, 'label-76') and text()='Apply']",
+  //       // "//span[contains(@class, 'test') and contains(@class, 'test2') and text()='Apply']",
+  //       { timeout: 5000 }
+  //     );
+  //   } catch (err: any) {
+  //     console.error(err);
+  //     // return await handlePuppeteerError(err, page, this.browserService);
+  //   } finally {
+  //     if (page) await this.closePage(page);
+  //   }
+  // }
 
   private async loadProxy(): Promise<string> {
     try {

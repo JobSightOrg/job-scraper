@@ -1,26 +1,13 @@
-import { promises as fsPromises } from "fs";
-import { Page } from "puppeteer";
+import { HTTPResponse, Page } from "puppeteer";
 import { setTimeout } from "node:timers/promises";
 import { BrowserService } from "./browser-service";
+import { ResponseError } from "../lib/custom-errors";
+import { handlePuppeteerError } from "../lib/handle-puppeteer-error";
 
 export default abstract class DefaultBrowser {
-  protected proxies: string[];
+  protected constructor(private browserService: BrowserService) {}
 
-  protected constructor(browserService: BrowserService) {
-    this.proxies = [];
-  }
-
-  // protected async loadProxies() {
-  //   try {
-  //     // Read the contents of the file asynchronously
-  //     const data = await fsPromises.readFile("proxies.txt", "utf8");
-
-  //     // Split the file contents into an array of lines
-  //     this.proxies = data.split("\n");
-  //   } catch (error) {
-  //     console.error("Error reading the file:", error);
-  //   }
-  // }
+  protected abstract handleCommonTasks(page: Page): Promise<void>;
 
   protected async waitTillHTMLRendered(page: Page, timeout = 10000) {
     const checkDurationMsecs = 1000;
@@ -50,5 +37,37 @@ export default abstract class DefaultBrowser {
     }
   }
 
-  abstract execTask(url: string): Promise<boolean>;
+  public async execTask(url: string): Promise<boolean> {
+    let page: Page | null = null;
+    let response: HTTPResponse | null = null;
+
+    try {
+      if (!this.browserService.getBrowser())
+        await this.browserService.initialize();
+
+      page = await this.browserService.openPage();
+      response = await page.goto(url, { waitUntil: "load", timeout: 5000 });
+
+      if (response && response.status() >= 400)
+        throw new ResponseError(
+          `Bad response. Status: ${response.status()}`,
+          response.status()
+        );
+
+      // await page.waitForXPath(
+      //   // "//span[contains(@class, 'ms-Button-label') and contains(@class, 'label-76') and text()='Apply']",
+      //   "//span[contains(@class, 'test') and contains(@class, 'test2') and text()='Apply']",
+      //   { timeout: 5000 }
+      // );
+
+      await this.handleCommonTasks(page);
+
+      return true;
+    } catch (err: any) {
+      console.error(err);
+      return await handlePuppeteerError(err, page, this.browserService);
+    } finally {
+      if (page) await this.browserService.closePage(page);
+    }
+  }
 }
