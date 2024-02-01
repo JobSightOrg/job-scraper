@@ -3,14 +3,14 @@ import { BrowserService } from "../modules/browser-service";
 
 // Define the type of the exCatch parameter as an object that maps error types to catch functions
 type ExCatch = {
-  [errorType: string]: (...args: any) => Promise<void>;
+  [errorType: string]: (...args: any) => Promise<any>;
 };
 
 const exCatch: ExCatch = {
   // Handle timeout error
-  TimeoutError: async (browserService: BrowserService): Promise<void> => {
-    // const browser: Browser | null = browserService.getBrowser();
-    console.log("here", browserService);
+  TimeoutError: async (page: Page): Promise<null> => {
+    await page.close();
+    return null;
   },
   // Handle navigation error
   NavigationError: async (page: Page): Promise<void> => {
@@ -21,9 +21,8 @@ const exCatch: ExCatch = {
 // Add the parameter types and the return type to the function declaration
 export async function handlePuppeteerError(
   e: Error,
-  page: Page | null,
-  browserService: BrowserService
-): Promise<void> {
+  page: Page | null
+): Promise<Page | null> {
   // exCatch is an object that maps error types to catch functions
   const catchFunc: Function | undefined = exCatch[e.name];
 
@@ -31,11 +30,11 @@ export async function handlePuppeteerError(
   if (catchFunc) {
     switch (e.name) {
       case "TimeoutError" || "ResponseError":
-        await catchFunc(browserService);
-        break;
+        return await catchFunc(page);
       case "NavigationError":
-        await catchFunc(page);
-        break;
+        return await catchFunc(page);
     }
   }
+
+  return page;
 }

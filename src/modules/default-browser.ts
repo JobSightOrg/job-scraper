@@ -51,7 +51,7 @@ export default abstract class DefaultBrowser implements IDefaultBrowser {
   ): Promise<boolean> {
     let page: Page | null = null;
     let response: HTTPResponse | null = null;
-    console.log("start");
+
     try {
       if (!this.browserService.getBrowser())
         await this.browserService.initialize();
@@ -69,9 +69,9 @@ export default abstract class DefaultBrowser implements IDefaultBrowser {
 
       return true;
     } catch (err: any) {
-      // console.error(err);
+      console.error(err);
 
-      await handlePuppeteerError(err, page, this.browserService);
+      page = await handlePuppeteerError(err, page);
 
       if (maxAttempts > 0) return await this.execTask(url, maxAttempts - 1);
 
