@@ -7,7 +7,7 @@ interface ProxyData {
   proxies: string[];
 }
 
-interface BrowserServiceProps {
+export interface IBrowserService {
   getBrowser: () => Browser | null;
   initialize: () => Promise<void>;
   openPage: () => Promise<Page>;
@@ -15,7 +15,7 @@ interface BrowserServiceProps {
   restartBrowser: () => Promise<void>;
 }
 
-export class BrowserService implements BrowserServiceProps {
+export class BrowserService implements IBrowserService {
   private browser: Browser | null = null;
   private browserInitialization: Promise<Browser> | null = null;
   private isInitializingBrowser: boolean = false;
@@ -48,8 +48,8 @@ export class BrowserService implements BrowserServiceProps {
 
     const page = await this.browser!.newPage();
 
-    // await useProxy(page, this.loadProxy());
     await page.setExtraHTTPHeaders(this.headers);
+    // await useProxy(page, this.loadProxy());
 
     return page;
   }
@@ -109,36 +109,6 @@ export class BrowserService implements BrowserServiceProps {
       throw error;
     }
   }
-
-  // public async execTask(url: string): Promise<void> {
-  //   let page: Page | null = null;
-  //   let response: HTTPResponse | null = null;
-
-  //   try {
-  //     if (!this.getBrowser()) await this.initialize();
-  //     console.log(this.getBrowser());
-
-  //     page = await this.openPage();
-  //     response = await page.goto(url, { waitUntil: "load", timeout: 5000 });
-
-  //     if (response && response.status() >= 400)
-  //       throw new ResponseError(
-  //         `Bad response. Status: ${response.status()}`,
-  //         response.status()
-  //       );
-
-  //     await page.waitForXPath(
-  //       "//span[contains(@class, 'ms-Button-label') and contains(@class, 'label-76') and text()='Apply']",
-  //       // "//span[contains(@class, 'test') and contains(@class, 'test2') and text()='Apply']",
-  //       { timeout: 5000 }
-  //     );
-  //   } catch (err: any) {
-  //     console.error(err);
-  //     // return await handlePuppeteerError(err, page, this.browserService);
-  //   } finally {
-  //     if (page) await this.closePage(page);
-  //   }
-  // }
 
   private async loadProxy(): Promise<string> {
     try {

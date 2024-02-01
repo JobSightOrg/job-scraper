@@ -4,8 +4,16 @@ import { BrowserService } from "./browser-service";
 import { ResponseError } from "../lib/custom-errors";
 import { handlePuppeteerError } from "../lib/handle-puppeteer-error";
 
-export default abstract class DefaultBrowser {
-  protected constructor(private browserService: BrowserService) {}
+interface IDefaultBrowser {
+  execTask: (url: string) => Promise<boolean>;
+}
+
+export default abstract class DefaultBrowser implements IDefaultBrowser {
+  private maxAttempts: number;
+
+  protected constructor(private browserService: BrowserService) {
+    this.maxAttempts = 2;
+  }
 
   protected abstract handleCommonTasks(page: Page): Promise<void>;
 
@@ -37,10 +45,13 @@ export default abstract class DefaultBrowser {
     }
   }
 
-  public async execTask(url: string): Promise<boolean> {
+  public async execTask(
+    url: string,
+    maxAttempts: number = this.maxAttempts
+  ): Promise<boolean> {
     let page: Page | null = null;
     let response: HTTPResponse | null = null;
-
+    console.log("start");
     try {
       if (!this.browserService.getBrowser())
         await this.browserService.initialize();
@@ -54,18 +65,17 @@ export default abstract class DefaultBrowser {
           response.status()
         );
 
-      // await page.waitForXPath(
-      //   // "//span[contains(@class, 'ms-Button-label') and contains(@class, 'label-76') and text()='Apply']",
-      //   "//span[contains(@class, 'test') and contains(@class, 'test2') and text()='Apply']",
-      //   { timeout: 5000 }
-      // );
-
       await this.handleCommonTasks(page);
 
       return true;
     } catch (err: any) {
-      console.error(err);
-      return await handlePuppeteerError(err, page, this.browserService);
+      // console.error(err);
+
+      await handlePuppeteerError(err, page, this.browserService);
+
+      if (maxAttempts > 0) return await this.execTask(url, maxAttempts - 1);
+
+      return false;
     } finally {
       if (page) await this.browserService.closePage(page);
     }
