@@ -2,14 +2,11 @@ import { Page } from "puppeteer";
 import { BrowserService } from "../browser-service";
 import DefaultBrowser from "../default-browser";
 
-interface IGoogleBrowser {
-  execTask: (url: string, counter: number) => Promise<boolean>;
-}
+// interface IGoogleBrowser {
+//   execTask: (url: string, counter: number) => Promise<boolean>;
+// }
 
-export default class GoogleBrowser
-  extends DefaultBrowser
-  implements IGoogleBrowser
-{
+export default class GoogleBrowser extends DefaultBrowser {
   private static instance: GoogleBrowser | null = null;
 
   private constructor(browserService: BrowserService) {

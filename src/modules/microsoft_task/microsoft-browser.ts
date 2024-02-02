@@ -2,14 +2,11 @@ import { Page } from "puppeteer";
 import { BrowserService } from "../browser-service";
 import DefaultBrowser from "../default-browser";
 
-interface IMicrosoftBrowser {
-  execTask: (url: string, counter: number) => Promise<boolean>;
-}
+// interface IMicrosoftBrowser {
+//   execTask: (url: string, counter: number) => Promise<boolean>;
+// }
 
-export default class MicrosoftBrowser
-  extends DefaultBrowser
-  implements IMicrosoftBrowser
-{
+export default class MicrosoftBrowser extends DefaultBrowser {
   private static instance: MicrosoftBrowser | null = null;
 
   private constructor(browserService: BrowserService) {
